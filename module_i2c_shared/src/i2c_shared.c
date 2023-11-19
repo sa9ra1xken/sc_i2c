@@ -43,3 +43,20 @@ int i2c_shared_master_write_reg(REFERENCE_PARAM(struct r_i2c, i2cPorts), int dev
     swlock_release(&i2c_swlock);
     return retval;
 }
+
+/* i2c_shared_master_write_part has been composed by sakurai */
+int i2c_shared_master_write_part(
+        REFERENCE_PARAM(struct r_i2c, i2cPorts),
+        int device,
+        int reg_addr,
+        const unsigned char data[],
+        int begin,
+        int end,
+        int offset)
+{
+    int retval;
+    swlock_acquire(&i2c_swlock);
+    retval = i2c_master_write_part(device, reg_addr, data, begin, end, offset, i2cPorts);
+    swlock_release(&i2c_swlock);
+    return retval;
+}

@@ -122,6 +122,41 @@ int i2c_master_write_reg(int device, int reg_addr,
                          int nbytes,
                          REFERENCE_PARAM(struct r_i2c, i2cPorts));
 
+/**Custamized version of i2c_master_write_reg
+ * intended to support efficient scrolling display on SSD1306 OLED device.
+ *
+ * \param device     Bus address of device, number between 0x00 and 0x7F.
+ *
+ * \param reg_addr   Address of register to write to, value between 0x00 and 0x7F.
+ *
+ * \param data       Array where data is stored.
+ *
+ * \param begin      Start position of the regein of interrest
+ *
+ * \param end        Last position of the regein of interrest
+ *
+ * \param offset     Transmission starting position in the regein of interrest
+ *
+ * \param i2c  Bidirectional port connected to both SDA and SCL.
+ *  *
+ *
+ * data
+ * data[0], data[1], data[2], ... data[begin], data[begin+1], ... d[end], data[end+1], ....
+ *
+ * transmission
+ * data[begin+offset], data[begin+offset+1], ... data[end], data[begin], data[begin+1], ... data[begin+offset]
+ *
+ */
+int i2c_master_write_part(
+        int device,
+        int addr,
+        unsigned char const s_data[],
+        int begin,
+        int end,
+        int offset,
+        REFERENCE_PARAM(struct r_i2c, i2cPorts));
+
+
 #ifdef __XS2A__
 /**Function that reads a register on an I2C device. Supported on XCORE200 only.
  *

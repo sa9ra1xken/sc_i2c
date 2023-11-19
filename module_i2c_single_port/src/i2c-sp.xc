@@ -157,6 +157,50 @@ int i2c_master_write_reg(int device, int addr, unsigned char const s_data[], int
    return ack == 0;
 }
 
+/* i2c_master_write_part has been added by sakurai */
+int i2c_master_write_part(int device, int addr, unsigned char const s_data[], int begin, int end, int offset, struct r_i2c &i2cPorts) {
+   int data;
+   int ack;
+
+   if(I2C_REPEATED_START_ON_NACK) {
+       int nacks = I2C_REPEATED_START_MAX_RETRIES;
+
+       while(nacks) {
+          startBit(i2cPorts.p_i2c);
+          if(!(ack = tx8(i2cPorts.p_i2c, device<<1))) {
+             // Ack, break from loop;
+             break;
+          }
+          waitAfterNACK(i2cPorts.p_i2c);
+          nacks--;
+       }
+       if(!nacks) {
+          /* Ran out of retries */
+          stopBit(i2cPorts.p_i2c);
+          return 0;
+        }
+    }
+    else {
+       startBit(i2cPorts.p_i2c);
+       ack = tx8(i2cPorts.p_i2c, device<<1);
+    }
+
+#ifdef I2C_TI_COMPATIBILITY
+   ack |= tx8(i2cPorts.p_i2c, addr << 1 | (data >> 8) & 1);
+#else
+   ack |= tx8(i2cPorts.p_i2c, addr);
+#endif
+
+   int ptr = begin + offset;
+   for(int i = 0; i < end - begin + 1 ; i++) {
+      data = s_data[ptr++];
+      ack |= tx8(i2cPorts.p_i2c, data);
+      if (ptr > end) ptr = begin;
+   }
+   stopBit(i2cPorts.p_i2c);
+   return ack == 0;
+}
+
 #ifdef __XS2A__
 
 int i2c_master_rx(int device, unsigned char data[], int nbytes, struct r_i2c &i2cPorts) {
